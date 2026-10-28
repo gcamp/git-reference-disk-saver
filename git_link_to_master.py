@@ -70,10 +70,10 @@ def setup_alternates(child_objects: Path, master_objects: Path, dry_run: bool = 
 
 
 def run_gc(repo_path: Path) -> None:
-    """Run git gc to prune duplicate objects."""
-    print(f"  Running git gc...")
+    """Repack to remove objects now available via alternates."""
+    print(f"  Running git repack...")
     subprocess.run(
-        ["git", "-C", str(repo_path), "gc", "--prune=now"],
+        ["git", "-C", str(repo_path), "repack", "-a", "-d", "-l"],
         capture_output=True, check=False
     )
 

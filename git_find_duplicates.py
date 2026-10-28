@@ -194,7 +194,14 @@ def find_git_repos(root: Path, max_depth: int = 10) -> list[RepoInfo]:
                 ))
                 # Scan submodules
                 scan_submodules(path, depth)
-            return  # Don't recurse into git repo subdirectories
+            # Continue scanning subdirs for standalone repos nested inside this repo
+            try:
+                for entry in path.iterdir():
+                    if entry.is_dir() and not entry.name.startswith('.'):
+                        scan_dir(entry, depth + 1)
+            except PermissionError:
+                pass
+            return
 
         try:
             for entry in path.iterdir():
@@ -334,10 +341,10 @@ def apply_changes(groups: list[RepoGroup], dry_run: bool) -> None:
 
     if linked_repos and not dry_run:
         print()
-        print(colored(f"⏳ Running garbage collection on {len(linked_repos)} repos...", Colors.DIM))
+        print(colored(f"⏳ Running git repack on {len(linked_repos)} repos...", Colors.DIM))
         for repo_path in linked_repos:
             subprocess.run(
-                ["git", "-C", str(repo_path), "gc", "--prune=now"],
+                ["git", "-C", str(repo_path), "repack", "-a", "-d", "-l"],
                 capture_output=True, check=False
             )
 
